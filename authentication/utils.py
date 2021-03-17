@@ -13,7 +13,7 @@ class Util:
         email.send()
 class ResetEmail:
     @staticmethod
-    def reset_email(self,request, user, user_data, relativeLink):
+    def reset_email(request, user, user_data, relativeLink):
         current_site = get_current_site(request).domain
         absurl = 'http://'+ current_site+ relativeLink+str(user.uid)
 

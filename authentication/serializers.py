@@ -26,6 +26,8 @@ class EmailVerificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['uid']
+
+
 class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model= User
@@ -36,8 +38,17 @@ class ForgotPasswordSerializer(serializers.ModelSerializer):
     class Meta:
         model= User
         fields= ['email']
+
+
 class ResetPasswordSerializer(serializers.ModelSerializer):
     confirm_password=serializers.CharField(max_length=100,write_only=True)
     class Meta:
         model= User
         fields=['password','confirm_password']
+
+
+class ReadProjectSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ['uid', 'email']
