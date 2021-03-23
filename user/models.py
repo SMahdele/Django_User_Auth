@@ -8,8 +8,8 @@ class UserProject(models.Model):
     title= models.CharField(max_length=256)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    start_date= models.DateTimeField(default=datetime.now)
-    end_date= models.DateTimeField(default=datetime.now)
+    start_date= models.DateField()
+    end_date= models.DateField()
     description= models.CharField(max_length=256)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
@@ -20,8 +20,8 @@ class UserProject(models.Model):
 class UserExperience(models.Model):
     company_name=models.CharField(max_length=200)
     designation=models.CharField(max_length=100)
-    start_date=models.DateTimeField(default=datetime.now)
-    end_date=models.DateTimeField(default=datetime.now)
+    start_date=models.DateField()
+    end_date=models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -32,8 +32,8 @@ class UserExperience(models.Model):
 
 class UserEducation(models.Model):
     degree=models.CharField(max_length=100)
-    start_date=models.DateTimeField(default=datetime.now)
-    end_date=models.DateTimeField(default=datetime.now)
+    start_date=models.DateField()
+    end_date=models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

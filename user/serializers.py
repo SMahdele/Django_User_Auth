@@ -5,17 +5,18 @@ from .models import  UserProject,UserEducation,UserExperience
 
 
 class UserProjectSerializer(serializers.ModelSerializer):
+    #owner = serializers.ReadOnlyField(source='owner.user')
 
     class Meta:
         model= UserProject
-        fields=['id','title','description','start_date','end_date','user']
+        fields=['title','description','start_date','end_date','user']
 
 class UserExperienceSerializer(serializers.ModelSerializer):
     class Meta:
         model= UserExperience
-        fields=['company_name','designation','start_date','end_date','id']
+        fields=['company_name','designation','start_date','end_date','user']
 
 class UserEducationSerializer(serializers.ModelSerializer):
     class Meta:
         model= UserEducation
-        fields= ['degree','start_date','end_date','id']
+        fields= ['degree','start_date','end_date','user']
