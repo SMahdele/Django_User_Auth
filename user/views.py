@@ -60,7 +60,7 @@ class UserExperienceDetails(APIView):
     serializer_class=UserExperienceSerializer
 
     def get(self,request,pk):
-            experiences=UserProject.objects.filter(user=pk)
+            experiences=UserExperience.objects.filter(user=pk)
             serializer = serializer_class(experiences, many=True)
             return Response({
                         'data':serializer.data})
@@ -74,7 +74,7 @@ class UserExperienceDetails(APIView):
             return Response({'data': serializer.data})
 
     def delete(self, rquest, pk):
-        experience = UserProject.objects.filter(user=pk)
+        experience = UserExperience.objects.filter(user=pk)
         experience.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -93,8 +93,8 @@ class UserEducationDetails(APIView):
 
     serializer_class=UserEducationSerializer
     def get(self,request,pk):
-            education=UserProject.objects.filter(user=pk)
-            serializer = UserProjectSerializer(education, many=True)
+            education=UserEducation.objects.filter(user=pk)
+            serializer = UserEducationSerializer(education, many=True)
             return Response({
                         'data':serializer.data
                    })
@@ -107,6 +107,6 @@ class UserEducationDetails(APIView):
             return Response({'data': serializer.data})
 
     def delete(self, rquest, pk):
-        education = UserProject.objects.filter(user=pk)
+        education = UserEducation.objects.filter(user=pk)
         education.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
