@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from django.shortcuts import render
 from rest_framework import generics, status
 from .serializers import RegisterSerializer, EmailVerificationSerializer, LoginSerializer, ForgotPasswordSerializer, \
     ResetPasswordSerializer,ReadProjectSerializer
@@ -13,7 +12,6 @@ import uuid
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-
 
 class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
@@ -40,14 +38,24 @@ class RegisterView(generics.GenericAPIView):
 class VerifyEmail(APIView):
     serializer_class = EmailVerificationSerializer
 
+    # def get(self, request, pk):
+    #     try:
+    #         user = User.objects.get(uid=pk)
+    #         user.is_verified = True
+    #         user.save()
+    #         return Response({'email': 'Successfully activated'}, status=status.HTTP_200_OK)
+    #
+    #     except User.DoesNotExist:
+    #         return Response({"Not a valid token"}, status.HTTP_400_BAD_REQUEST)
     def get(self, request):
         try:
-            token = request.GET['token']
-            object = User.objects.get(uid=token)
-            object.is_verified = True
-            object.save()
+            #if request.method== 'GET':
+                token = request.GET['token']
+                object = User.objects.get(uid=token)
+                object.is_verified = True
+                object.save()
 
-            return Response({"status": True, "message": "User verified successfully", "data": {}})
+                return Response({"status": True, "message": "User verified successfully", "data": {}})
         except User.DoesNotExist:
             return Response({"No Verification token exists with this token"}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -7,7 +7,7 @@ import uuid
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
-    uid = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=False)
+    uid = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -21,8 +21,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
     def tokens(self):
-        refresh = RefreshToken.for_user(self)
-        return {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token)
-        }
+        return ''
+        #refresh = RefreshToken.for_user(self)
+        #return {
+            #'refresh': str(refresh),
+            #'access': str(refresh.access_token)
+        #}
