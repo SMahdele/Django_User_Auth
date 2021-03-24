@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics, status
-from .serializers import RegisterSerializer, EmailVerificationSerializer, LoginSerializer, ForgotPasswordSerializer, \
-    ResetPasswordSerializer,ReadProjectSerializer
+from .serializers import ( RegisterSerializer, EmailVerificationSerializer, LoginSerializer,
+                                    ForgotPasswordSerializer, ResetPasswordSerializer,ReadProjectSerializer)
 from rest_framework.response import Response
 from .models import User
 from .utils import Util, ResetEmail
@@ -37,19 +37,8 @@ class RegisterView(generics.GenericAPIView):
 
 class VerifyEmail(APIView):
     serializer_class = EmailVerificationSerializer
-
-    # def get(self, request, pk):
-    #     try:
-    #         user = User.objects.get(uid=pk)
-    #         user.is_verified = True
-    #         user.save()
-    #         return Response({'email': 'Successfully activated'}, status=status.HTTP_200_OK)
-    #
-    #     except User.DoesNotExist:
-    #         return Response({"Not a valid token"}, status.HTTP_400_BAD_REQUEST)
     def get(self, request):
         try:
-            #if request.method== 'GET':
                 token = request.GET['token']
                 object = User.objects.get(uid=token)
                 object.is_verified = True
@@ -70,12 +59,10 @@ class LoginView(generics.GenericAPIView):
             for field in ['email', 'password']:
                 if not user.get(field):
                     return Response({f"{field} is required"}, status.HTTP_400_BAD_REQUEST)
-            # object = self.model_class.objects.get(
-            #     email=self.request.data['email'])
+
             object = User.objects.get(email=self.request.data['email'])
             if not object.check_password(self.request.data['password']):
                 raise ValidationError(detail=f"Incorrect Password")
-            #import pdb;pdb.set_trace()
             token = RefreshToken.for_user(object)
             user_serializer = LoginSerializer(object)
             object_data = user_serializer.data
