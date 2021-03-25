@@ -7,21 +7,70 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.core.exceptions import *
 from rest_framework import permissions
-from .permissions import IsOwnerOrReadOnly
+from .permissions import *
 from rest_framework.exceptions import ValidationError
 
 
 # Create your views here.
 
-class UserProjectView(APIView):
-    serializer_class = UserProjectSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly]
+class DetailsAPIView(APIView):
+    serializer_class = None
+    model_class = None
 
+    def get_obj(self, request, id):
+        try:
+            return self.model_class.objects.get(id=id)
+        except self.model_class.DoesNotExist:
+            raise ValidationError("No details found with this id")
+    #import pdb; pdb.set_trace()
+    def get(self, request, id):
+        obj = self.get_obj(request, id=id)
+        self.check_object_permissions(self.request,obj)
+        serializer = self.serializer_class(obj)
+        return Response({
+            'status': True,
+            'message': "user details",
+            'data': serializer.data
+        })
+
+    def put(self, request, id):
+        try:
+            details = self.get_obj(request, id=id)
+            serializer = self.serializer_class(instance=details,
+                                               data={**self.request.data, **{"user": request.user.pk}})
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'status': True,
+                                 'message': "details updated successfully",
+                                 'data': serializer.data})
+        except ValidationError:
+            return Response(serializer.errors)
+
+    def patch(self, request, id):
+        try:
+            details = self.get_obj(request, id=id)
+            serializer = self.serializer_class(instance=details,partial=True,
+                                               data={**self.request.data, **{"user": request.user.pk}})
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'status': True,
+                                 'message': " details partially updated.",
+                                 'data': serializer.data})
+        except ValidationError:
+            return Response(serializer.errors)
+
+
+    def delete(self, request, id):
+        details = self.get_obj(request, id=id)
+        details.delete()
+        return Response({"message": "user details does not exist"})
+
+class ReadPostAPIView(APIView):
+    serializer_class = None
+    model_class = None
     def get(self, request):
-        pk = request.user.pk
-        projects = UserProject.objects.filter(user=pk)
-        serializer = UserProjectSerializer(projects, many=True)
+        details = self.model_class.objects.filter(user=request.user.pk)
+        serializer = self.serializer_class(details, many=True)
         return Response(serializer.data)
 
     def post(self, request, *args, **kwargs):
@@ -30,174 +79,50 @@ class UserProjectView(APIView):
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response({'status': True,
-                                 'message': 'project details added successfully',
+                                 'message': ' details added successfully',
                                  'data': serializer.data})
         except ValidationError:
             return Response(serializer.errors)
-        # except Exception as e:
-        #     return Response(str(e))
+        except Exception as e:
+            return Response(str(e))
 
 
-class UserProjectDetails(APIView):
+
+class UserProjectView(ReadPostAPIView):
     serializer_class = UserProjectSerializer
+    model_class = UserProject
     permission_classes = [permissions.IsAuthenticatedOrReadOnly,
                           IsOwnerOrReadOnly]
 
-    def get_obj(self, request, id):
-        try:
-            return UserProject.objects.get(id=id)
-        except UserProject.DoesNotExist:
-            raise ValidationError("No project found with this id")
 
-    def get(self, request, id):
-        project = self.get_obj(request, id=id)
-        serializer = UserProjectSerializer(project)
-        return Response({
-            'status': True,
-            'message': "user project details",
-            'data': serializer.data
-        })
-
-    def put(self, request, id):
-        try:
-            project = self.get_obj(request, id=id)
-            serializer = self.serializer_class(instance=project,
-                                               data={**self.request.data, **{"user": request.user.pk}})
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response({'status': True,
-                                 'message': " project updated successfully",
-                                 'data': serializer.data})
-        except ValidationError:
-            return Response(serializer.errors)
-
-    def delete(self, request, id):
-        project = self.get_obj(request, id=id)
-        project.delete()
-        return Response({"message": "user details does not exist"})
+class UserProjectDetails(DetailsAPIView):
+    serializer_class = UserProjectSerializer
+    permission_classes = [IsAuthenticatedOrOwnerOrAdmin]
+    model_class = UserProject
 
 
-class UserExperienceView(generics.GenericAPIView):
+class UserExperienceView(ReadPostAPIView):
     serializer_class = UserExperienceSerializer
+    model_class = UserExperience
     permission_classes = [permissions.IsAuthenticatedOrReadOnly,
                           IsOwnerOrReadOnly]
 
-    def get(self, request):
-        pk = request.user.pk
-        experience = UserExperience.objects.filter(user=pk)
-        serializer = UserExperienceSerializer(experience, many=True)
-        return Response(serializer.data)
 
-    def post(self, request, *args, **kwargs):
-        try:
-            experience = self.request.data
-            serializer = self.serializer_class(data={**experience, **{"user": request.user.pk}})
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response({'status': True,
-                                 'message': 'experience details added successfully',
-                                 'data': serializer.data})
-        except ValidationError:
-            return Response(serializer.errors)
-
-
-class UserExperienceDetails(APIView):
+class UserExperienceDetails(DetailsAPIView):
     serializer_class = UserExperienceSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly]
-
-    def get_obj(self, request, id):
-        try:
-            return UserExperience.objects.get(id=id)
-        except UserExperience.DoesNotExist:
-            raise ValidationError("No experience found with this id")
-
-    def get(self, request, id):
-        experiences = self.get_obj(request, id=id)
-        serializer = UserExperienceSerializer(experiences)
-        return Response({
-            'status': True,
-            'message': "user experience details ",
-            'data': serializer.data
-        })
-
-    def put(self, request, id):
-        try:
-            experience = self.get_obj(request, id=id)
-            serializer = self.serializer_class(instance=experience,
-                                               data={**self.request.data, **{"user": request.user.pk}})
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response({'status': True,
-                                 'message': " experience updated successfully",
-                                 'data': serializer.data})
-        except ValidationError:
-            return Response(serializer.errors)
-
-    def delete(self, request, id):
-        experience = self.get_obj(request, id=id)
-        experience.delete()
-        return Response({"message": "user details does not exist"})
+    permission_classes = [IsAuthenticatedOrOwnerOrAdmin]
+    model_class = UserExperience
 
 
-class UserEducationView(generics.GenericAPIView):
+class UserEducationView(ReadPostAPIView):
     serializer_class = UserEducationSerializer
+    model_class = UserEducation
     permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly]
-
-    def get(self, request):
-        pk = request.user.pk
-        education = UserEducation.objects.filter(user=pk)
-        serializer = UserEducationSerializer(education, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, *args, **kwargs):
-        try:
-            education = self.request.data
-            serializer = self.serializer_class(data={**education, **{"user": request.user.pk}})
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response({'status': True,
-                                 'message': 'education details added successfully',
-                                 'data': serializer.data})
-        except ValidationError:
-            return Response(serializer.errors)
+                          IsOwnerOrReadOnly,
+                          ]
 
 
-class UserEducationDetails(APIView):
+class UserEducationDetails(DetailsAPIView):
     serializer_class = UserEducationSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly]
-
-    def get_obj(self, request, id):
-        try:
-            return UserEducation.objects.get(id=id)
-        except UserEducation.DoesNotExist:
-            raise ValidationError("No education details found with this id")
-
-    def get(self, request, id):
-        education = self.get_obj(request, id=id)
-        serializer = UserEducationSerializer(education)
-        return Response({
-            'status': True,
-            'message': "user education details",
-            'data': serializer.data
-        })
-
-    def put(self, request, id):
-        try:
-            education = self.get_obj(request, id=id)
-            serializer = self.serializer_class(instance=education,
-                                               data={**self.request.data, **{"user": request.user.pk}})
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response({'status': True,
-                                 'message': " education details updated successfully",
-                                 'data': serializer.data})
-        except ValidationError:
-            return Response(serializer.errors)
-
-    def delete(self, request, id):
-        education = self.get_obj(request, id=id)
-        education.delete()
-        return Response({"message": "user details does not exist"})
+    permission_classes = [IsAuthenticatedOrOwnerOrAdmin]
+    model_class = UserEducation

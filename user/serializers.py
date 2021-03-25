@@ -5,7 +5,6 @@ from .models import  UserProject,UserEducation,UserExperience
 
 
 class UserProjectSerializer(serializers.ModelSerializer):
-    #owner = serializers.ReadOnlyField(source='owner.user')
 
     class Meta:
         model= UserProject
