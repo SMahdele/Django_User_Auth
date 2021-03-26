@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'authentication',
     'rest_framework.authtoken',
-    'user'
+    'user',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -126,6 +127,13 @@ SIMPLE_JWT = {
 #
 # }
 REST_FRAMEWORK={
+# 'DEFAULT_PAGINATION_CLASS':
+# 'rest_framework.pagination.PageNumberPagination',
+#     'PAGE_SIZE': 1,
+# 'DEFAULT_FILTER_BACKENDS': 'django_filters.rest_framework.DjangoFilterBackend',
+
+
+
     'NON_FIELD_ERRORS_KEY' :'error',
 
 
@@ -176,4 +184,4 @@ EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER='send123test.email@gmail.com'
-EMAIL_HOST_PASSWORD='*******'
+EMAIL_HOST_PASSWORD='test123email'
