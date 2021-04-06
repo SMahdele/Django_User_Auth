@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'authentication',
     'rest_framework.authtoken',
     'user',
+    'followers',
+    'posts',
     'django_filters',
 ]
 
@@ -184,4 +186,4 @@ EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER='send123test.email@gmail.com'
-EMAIL_HOST_PASSWORD='test123email'
+EMAIL_HOST_PASSWORD='******'

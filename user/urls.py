@@ -9,7 +9,4 @@ urlpatterns = [   path('get-project/<str:id>/',UserProjectDetails.as_view(), nam
                   path('list-exp/',UserExperienceView.as_view(), name="create/list-exp"),
                   path('get-edu/<str:id>/',UserEducationDetails.as_view(), name="get-up-del-edu"),
                   path('list-edu/', UserEducationView.as_view(), name="create/list-edu"),
-                  # path('filter/', UserProjectView.as_view(), name="project-pagination"),
-                  # path('exp/', UserExperienceView.as_view(), name="exp-pagination"),
-                  # path('edu/', UserEducationView.as_view(), name="edu-pagination")
 ]
