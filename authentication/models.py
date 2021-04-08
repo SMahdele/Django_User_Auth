@@ -3,10 +3,8 @@ from django.contrib.auth.models import (AbstractBaseUser, PermissionsMixin)
 from .managers import UserManager
 import uuid
 
-
-
-class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(max_length=255, unique=True)
+class User(AbstractBaseUser,PermissionsMixin):
+    email = models.EmailField(max_length=255, unique=True,editable=False)
     uid = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -20,8 +18,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
-    def tokens(self):
-        return ''
+    # def tokens(self):
+    #     return ''
         #refresh = RefreshToken.for_user(self)
         #return {
             #'refresh': str(refresh),

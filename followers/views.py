@@ -1,60 +1,57 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
-# from .serializers import FollowerSerializer
-from rest_framework import generics, status
+from rest_framework import generics
 from .models import Follower
 from authentication.models import User
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
-from .serializers import *
+from .serializers import FollowUserSerializer, FollowRequestSerializer
+from user.permissions import IsAuthenticatedOrOwnerOrAdmin,IsOwnerOrReadOnly
+
 # Create your views here.
 
 class FollowUserView(APIView):
     serializer_class= FollowUserSerializer
     model_class=Follower
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrOwnerOrAdmin,IsOwnerOrReadOnly]
 
-    def get_user(self,request,pk):
+    def post(self, request, pk,*args,**kwargs):
         try:
-            # import pdb;
-            # pdb.set_trace()
-            return User.objects.get(pk=pk)
+            # import pdb; pdb.set_trace()
+            user_to_follow= User.objects.get(pk=pk)
+            user=request.user
+            follower= Follower()
+            follower.save()
+            if user_to_follow == user:
+                return Response({'message': "invalid operation"})
+            if user_to_follow.is_private:
+                follower.requested_by.add(user_to_follow,user)
+                # requests=follower.requested_by.values()
+                # print(requests)
+                serializer = FollowUserSerializer(data={**request.data, **{"requested_by": request.user.pk}})
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+
+                return Response({'status':True,
+                                 'message':'follow request sent',
+                                 "requested_by":serializer.data})
+            else:
+                    follower.followed_by.add(user_to_follow,user)
+                    serializer = FollowUserSerializer(data={**request.data, **{"followed_by": request.user.pk}})
+                    if serializer.is_valid(raise_exception=True):
+                        serializer.save()
+
+            # list=follower.followed_by.all()
+                    # print(list)
+            return Response({'status': True,
+                             'message': 'followed successfully',
+                             "followed_by":serializer.data
+                             })
         except User.DoesNotExist:
-            raise ValidationError("No such user found")
+            raise ValidationError('no such profile found')
 
-    def post(self,request,pk,*args,**kwargs):
-        try:
-            data=request.data
-            serializer = self.serializer_class(data=data)
-            if  serializer.is_valid(raise_exception=True):
-                serializer.save()
-
-                user_to_follow= self.get_user(request,pk=pk)
-                user= self.request.user.uid
-                if user_to_follow.is_private:
-                    # follower.send_request(another_user)
-                    return Response({'status': True,
-                             'message': 'follow request sent',
-                                 "requested_by": serializer.data['uid'] })
-
-                else:
-                    user.add(user_to_follow)
-                    return Response({'message': 'following',
-                                     'followed_by': serializer.data['uid']})
-
-        except Follower.DoesNotExist:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+# class FollowedbyRequestedbyListView(APIView):
+#     serializer_class=FollowUserSerializer
+#     model_class= Follower
 
 
-class FollowersView(APIView):
-    serializer_class=FollowersSerializer
-    model_class= Follower
-
-    def get(self,request):
-        # if request.method== "GET":
-        import pdb; pdb.set_trace()
-        user=request.user.uid
-        followers=self.model_class.objects.get(pk=user)
-        return Response({'followers':followers})
 

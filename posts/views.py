@@ -1,15 +1,12 @@
 from rest_framework.views import APIView
 from .serializers import UserPostSerializer, CommentSerializer, PostLikeDislikeSerializer
 from .models import UserPost, Comment
-from rest_framework import generics, status
-from rest_framework.generics import ListAPIView
-from rest_framework.permissions import IsAuthenticated
-from django.core.exceptions import *
+from rest_framework import generics
 from rest_framework.response import Response
 from authentication.models import User
 from rest_framework.exceptions import ValidationError
 from rest_framework import permissions
-from user.permissions import *
+from user.permissions import IsAuthenticatedOrOwnerOrAdmin, IsOwnerOrReadOnly
 from rest_framework.pagination import PageNumberPagination, CursorPagination
 from .pagination import PostsPagination, CommentsPagination
 
@@ -22,7 +19,7 @@ class PostUpdateDeleteView(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly,
                           IsOwnerOrReadOnly]
 
-    def get_post(self, request, id):
+    def get_post(self,request, id):
         try:
             return self.model_class.objects.get(id=id)
         except self.model_class.DoesNotExist:
@@ -89,6 +86,12 @@ class CommentView(generics.ListAPIView):
     model_class = Comment
     pagination_class = CommentsPagination
 
+    def get(self,request,id):
+        comments = Comment.objects.filter(post=id)
+        serializer = self.serializer_class(comments, many=True)
+        page = self.paginate_queryset(serializer.data)
+        return self.get_paginated_response(page)
+
     def post(self, request, id, *args, **kwargs):
         try:
             post = UserPost.objects.get(id=id)
@@ -101,17 +104,53 @@ class CommentView(generics.ListAPIView):
         except ValidationError:
             return Response(serializer.errors)
 
+
+class CommentUpdateDeleteView(APIView):
+    serializer_class=CommentSerializer
+    model_class=Comment
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly]
+
+    def get_obj(self,request,id):
+       try:
+           # import pdb; pdb.set_trace()
+           return self.model_class.objects.get(id=id)
+       except self.model_class.DoesNotExist:
+           raise ValidationError("No comment found with this id")
+
     def get(self, request, id):
-        comments = Comment.objects.filter(post=id)
-        serializer = self.serializer_class(comments, many=True)
-        page = self.paginate_queryset(serializer.data)
-        return self.get_paginated_response(page)
+        obj = self.get_obj(request, id=id)
+        self.check_object_permissions(self.request, obj)
+        serializer = self.serializer_class(obj)
+        return Response({
+            'status': True,
+            'message': "comment ",
+            'data': serializer.data
+        })
+    def put(self, request, id):
+        try:
+            comment = self.get_obj(request, id=id)
+            serializer = self.serializer_class(instance=comment,
+                                               data={**self.request.data, **{"user": request.user.pk}})
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'status': True,
+                                 'message': "comment updated successfully",
+                                 'data': serializer.data})
+        except ValidationError:
+            return Response(serializer.errors)
+
+    def delete(self, request, id):
+        comment = self.get_obj(request, id=id)
+        comment.delete()
+        return Response({"message": "comment with this id does not exist"})
+
 
 class PostLikeDislikeView(APIView):
     serializer_class = PostLikeDislikeSerializer
     model_class = UserPost
 
-    def post(self, request, id):
+    def post(self, request, id,*args,**kwargs):
         try:
             post = UserPost.objects.get(id=id)
             user = request.user.pk

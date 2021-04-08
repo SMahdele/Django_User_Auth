@@ -52,3 +52,8 @@ class ReadProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['uid', 'email']
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=User
+        fields=['uid','is_private','email' ]

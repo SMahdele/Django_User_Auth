@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics, status
 from .serializers import ( RegisterSerializer, EmailVerificationSerializer, LoginSerializer,
-                                    ForgotPasswordSerializer, ResetPasswordSerializer,ReadProjectSerializer)
+                                    ForgotPasswordSerializer, ResetPasswordSerializer,ReadProjectSerializer,ProfileUpdateSerializer)
 from rest_framework.response import Response
 from .models import User
 from .utils import Util, ResetEmail
@@ -12,7 +12,7 @@ import uuid
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-
+from user.permissions import *
 class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
 
@@ -24,7 +24,6 @@ class RegisterView(generics.GenericAPIView):
         user_data = serializer.data
         uid = user_data['uid']
         user = User.objects.get(email=user_data['email'])
-
         current_site = get_current_site(request).domain
         relativeLink = reverse('email-verify')
 
@@ -131,3 +130,40 @@ class TokenTestingView(generics.GenericAPIView):
 
         except User.DoesNotExist:
             return Response({"Not a valid token"}, status.HTTP_400_BAD_REQUEST)
+
+class ProfileUpdateView(APIView):
+    permission_class=[IsAuthenticatedOrOwnerOrAdmin,IsOwnerOrReadOnly]
+    serializer_class= ProfileUpdateSerializer
+    model_class=User
+
+    def get_profile(self,request,pk):
+        try:
+            return self.model_class.objects.get(uid=pk)
+        except self.model_class.DoesNotExist:
+            raise ValidationError ('No such user found')
+
+    def get(self,request,pk):
+        obj=self.get_profile(request,pk=pk)
+        self.check_object_permissions(self.request,obj)
+        serializer= self.serializer_class(obj)
+        return Response({'status':True,
+                         'message':'user profile',
+                         'data': serializer.data})
+
+    def put(self,request,pk):
+        try:
+            profile = self.get_profile(request,pk=pk)
+            serializer = self.serializer_class(instance=profile,
+                                               data={**self.request.data, **{"user": request.user.pk}})
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'status': True,
+                                 'message': "profile updated successfully",
+                                 'data': serializer.data})
+        except ValidationError:
+            return Response(serializer.errors)
+
+    def delete(self,request, pk):
+        profile = self.get_profile(request,pk=pk)
+        profile.delete()
+        return Response({"message": "user does not exist"})

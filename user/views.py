@@ -22,7 +22,7 @@ class DetailsAPIView(APIView):
     serializer_class = None
     model_class = None
 
-    def get_obj(self, request, id):
+    def get_obj(self,request, id):
         try:
             return self.model_class.objects.get(id=id)
         except self.model_class.DoesNotExist:
