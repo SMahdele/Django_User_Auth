@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'authentication',
     'rest_framework.authtoken',
     'user',
-    'followers',
+    'follower',
     'posts',
     'django_filters',
 ]

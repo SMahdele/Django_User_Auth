@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from user.permissions import *
+
 class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
 
