@@ -4,81 +4,51 @@ from .models import Follower
 from authentication.models import User
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from .serializers import EachUserSerializer,FollowerSerializer,RequestsListSerializer
+from .serializers import FollowUnfollowUserSerializer,FollowRequestSerializer
 from user.permissions import IsAuthenticatedOrOwnerOrAdmin,IsOwnerOrReadOnly
-from rest_framework.decorators import api_view, action
-
 from .utils import FollowRequestAcceptDeny
 
 # Create your views here.
 
-class FollowUserView(APIView):
-    serializer_class= EachUserSerializer
+class FollowUnfollowUserView(APIView):
+    serializer_class= FollowUnfollowUserSerializer
     model_class=Follower
     permission_classes = [IsAuthenticatedOrOwnerOrAdmin,IsOwnerOrReadOnly]
-
-    # @api_view(['POST'])
-    def post(self,request, pk):
-        # import pdb; pdb.set_trace()
-        user_to_follow = User.objects.get(pk=pk)
-        follower=Follower()
-        follower.save()
-        if not user_to_follow== request.user:
-            if user_to_follow.is_private:
-                follower.requested_by.add(user_to_follow)
-                follower.save()
-                return Response({'message':'request sent'})
+    def post(self,request, pk,*args,**kwargs):
+        try:
+            # import pdb; pdb.set_trace()
+            user_to_follow= User.objects.get(pk=pk)
+            qs= Follower.objects.filter(user=request.user)
+            obj=qs.first()
+            if user_to_follow in obj.followed_by.all():
+                obj.followed_by.remove(user_to_follow)
+                return Response({'status':True,
+                                 'message': 'unfollowed'})
             else:
-                follower.followed_by.add(user_to_follow)
-                return Response('followed successfully')
+                obj.followed_by.add(user_to_follow)
+            # print(obj.followed_by.all())
+            return Response({'status': True,
+                             'message': 'followed'})
+        except User.DoesNotExist:
+            return Response('no such user')
 
-class UnFollowUserView(APIView):
-    serializer_class=EachUserSerializer
-    model_class= Follower
-    permission_classes = [IsAuthenticatedOrOwnerOrAdmin,IsOwnerOrReadOnly]
-
-    def post(self,request,pk):
-        user= User.objects.get(pk=pk)
-        follower= Follower()
-        follower.save()
-        if user in follower.followed_by.all():
-            follower.followed_by.remove(user)
-            follower.save()
-            return Response('unfollowed successfully')
-        if user in follower.requested_by.all():
-            follower.requested_by.remove(user)
-            follower.save()
-            return Response('request cancelled')
-
-class FollowersListView(APIView):
-    serializer_class= FollowerSerializer
-    model_class=Follower
-    permission_classes = [IsAuthenticatedOrOwnerOrAdmin,IsOwnerOrReadOnly]
-
-    def get(self,request):
-        user=self.model_class.objects.filter(pk=request.user.pk)
-        follower=Follower()
-        follower.save()
-        followers= follower.followed_by.filter(user=user)
-        serializer = self.serializer_class(followers, many=True)
-        return Response({'data': serializer.data})
-
-class RequestsListView(APIView):
-    serializer_class= RequestsListSerializer
-    model_class=Follower
-    permission_classes = [IsAuthenticatedOrOwnerOrAdmin,IsOwnerOrReadOnly]
-
-    def get(self,request):
-        user=self.model_class.objects.filter(pk=request.user.pk)
-        requests = Follower()
-        requests.save()
-        requested_by = requests.followed_by.filter(user=user)
-        serializer = self.serializer_class(requested_by, many=True)
-        return Response({'data': serializer.data})
-
-
-
-
-
-
-
+class FollowRequestView(APIView):
+    serializer_class = FollowRequestSerializer
+    model_class = Follower
+    permission_classes = [IsAuthenticatedOrOwnerOrAdmin, IsOwnerOrReadOnly]
+    def post(self,request, pk,*args,**kwargs):
+        try:
+            # import pdb; pdb.set_trace()
+            user_to_follow = User.objects.get(pk=pk)
+            qs = Follower.objects.filter(user=request.user)
+            obj = qs.first()
+            if user_to_follow in obj.requested_by.all():
+                obj.requested_by.remove(user_to_follow)
+                return Response({'status': True,
+                             'message':'follow request cancelled'})
+            elif user_to_follow.is_private:
+                obj.requested_by.add(user_to_follow)
+                return Response({'status':True,
+                    'message': 'follow request'})
+        except User.DoesNotExist:
+                return Response('no such user')

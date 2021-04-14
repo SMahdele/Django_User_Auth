@@ -10,8 +10,8 @@ class Follower(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-            constraints=[ models.UniqueConstraint(fields=['user','followed_by','requested_by'],name='unique_together')]
+    # class Meta:
+    #         constraints=[ models.UniqueConstraint(fields=['user','followed_by','requested_by'],name='unique_together')]
 
-    # def __str__(self):
-    #         return
+    def __str__(self):
+            return 'id'
